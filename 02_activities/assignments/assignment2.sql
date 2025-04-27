@@ -53,7 +53,16 @@ FROM customer_purchases;
 /* 2. Reverse the numbering of the query from a part so each customer’s most recent visit is labeled 1, 
 then write another query that uses this one as a subquery (or temp table) and filters the results to 
 only the customer’s most recent visit. */
-
+SELECT *, 
+  customer_id,
+  market_date
+FROM (
+    SELECT 
+      customer_id,
+      market_date,
+      ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY market_date DESC) AS visit_number
+    FROM customer_purchases
+) AS ranked_visits;
 
 
 /* 3. Using a COUNT() window function, include a value along with each row of the 
