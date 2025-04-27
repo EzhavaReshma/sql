@@ -167,6 +167,16 @@ Remember, CROSS JOIN will explode your table rows, so CROSS JOIN should likely b
 Think a bit about the row counts: how many distinct vendors, product names are there (x)?
 How many customers are there (y). 
 Before your final group by you should have the product of those two queries (x*y).  */
+select 
+    v.vendor_name, 
+    p.product_name, 
+    sum(5 * vi.original_price) as total_revenue_per_product
+from vendor_inventory vi
+join vendor v on vi.vendor_id = v.vendor_id
+join product p on vi.product_id = p.product_id
+cross join (select distinct customer_id from customer_purchases) c
+group by v.vendor_name, p.product_name
+order by v.vendor_name, p.product_name;
 
 
 
