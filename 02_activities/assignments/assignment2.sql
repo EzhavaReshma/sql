@@ -19,9 +19,9 @@ HINT: keep the syntax the same, but edited the correct components with the strin
 The `||` values concatenate the columns into strings. 
 Edit the appropriate columns -- you're making two edits -- and the NULL rows will be fixed. 
 All the other rows will remain the same.) */
-SELECT *,
+select *,
   product_name || ', ' || COALESCE(product_size, '') || ' (' || COALESCE(product_qty_type, 'unit') || ')' as updated_column
-FROM product
+from product
 
 
 --Windowed Functions
@@ -34,41 +34,44 @@ each new market date for each customer, or select only the unique market dates p
 (without purchase details) and number those visits. 
 HINT: One of these approaches uses ROW_NUMBER() and one uses DENSE_RANK(). */
 --Using row_number
-SELECT 
+select 
   customer_id,
   market_date,
-  ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY market_date) AS visit_number
-FROM customer_purchases;
+  row_number() over (partition by customer_id order by market_date) as visit_number
+from customer_purchases;
 
 --using dense_rank
-SELECT 
+select 
   customer_id,
   market_date,
-  DENSE_RANK() OVER (PARTITION BY customer_id ORDER BY market_date) AS visit_number
-FROM customer_purchases;
-
-
-
+  dense_rank() over (partition by customer_id order by market_date) as visit_number
+from customer_purchases;
 
 /* 2. Reverse the numbering of the query from a part so each customer’s most recent visit is labeled 1, 
 then write another query that uses this one as a subquery (or temp table) and filters the results to 
 only the customer’s most recent visit. */
-SELECT 
+select 
   customer_id,
   market_date
-FROM (
-    SELECT 
+from (
+    select 
       customer_id,
       market_date,
-      ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY market_date DESC) AS visit_number
-    FROM customer_purchases
-) AS ranked_visits
-WHERE visit_number = 1;
+      row_number() over (partition by customer_id order by market_date desc) as visit_number
+    from customer_purchases
+) 
+as ranked_visits
+where visit_number = 1;
 
 
 /* 3. Using a COUNT() window function, include a value along with each row of the 
 customer_purchases table that indicates how many different times that customer has purchased that product_id. */
-
+select 
+  customer_id,
+  product_id,
+  market_date,
+  count(*) over (partition by customer_id, product_id) as purchase_count
+from customer_purchases;
 
 
 -- String manipulations
@@ -82,7 +85,13 @@ Remove any trailing or leading whitespaces. Don't just use a case statement for 
 | Habanero Peppers - Organic | Organic     |
 
 Hint: you might need to use INSTR(product_name,'-') to find the hyphens. INSTR will help split the column. */
-
+select 
+  product_name,
+  case 
+    when instr(product_name, '-') > 0 then trim(substr(product_name, instr(product_name, '-') + 1))
+    else null
+  end as description
+from product;
 
 
 /* 2. Filter the query to show any product_size value that contain a number with REGEXP. */
