@@ -112,6 +112,46 @@ HINT: There are a possibly a few ways to do this query, but if you're struggling
 3) Query the second temp table twice, once for the best day, once for the worst day, 
 with a UNION binding them. */
 
+-- Step 1: Creating a temp table for daily sales totals
+create temporary table temp_daily_sales as
+select 
+    market_date,
+    sum(quantity * cost_to_customer_per_qty) as total_sales
+from customer_purchases
+group by market_date;
+
+
+-- Step 2: Creating a temp table with ranked days
+create temporary table temp_ranked_days as
+select
+    market_date,
+    total_sales,
+    rank() over (order by total_sales desc) as sales_rank_high,
+    rank() over (order by total_sales asc) as sales_rank_low
+from temp_daily_sales;
+
+
+-- Step 3: using UNION for results
+select 
+    market_date,
+    total_sales,
+    'Highest Sales Day' as sales_category
+from temp_ranked_days
+where sales_rank_high = 1
+
+union
+
+select 
+    market_date,
+    total_sales,
+    'Lowest Sales Day' as sales_category
+from temp_ranked_days
+where sales_rank_low = 1
+order by total_sales desc;
+
+
+drop table temp_daily_sales;
+drop table temp_ranked_days;
 
 
 
