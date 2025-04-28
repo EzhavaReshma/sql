@@ -127,7 +127,12 @@ VALUES(col1,col2,col3,col4,col5)
 
 HINT: you might need to search for strfrtime modifers sqlite on the web to know what the modifers for month 
 and year are! */
-
+SELECT 
+  customer_id,
+  strftime('%m', market_date) AS month,
+  strftime('%Y', market_date) AS year
+FROM customer_purchases
+ORDER BY year, month;
 
 
 /* 2. Using the previous query as a base, determine how much money each customer spent in April 2022. 
@@ -135,4 +140,9 @@ Remember that money spent is quantity*cost_to_customer_per_qty.
 
 HINTS: you will need to AGGREGATE, GROUP BY, and filter...
 but remember, STRFTIME returns a STRING for your WHERE statement!! */
-
+select customer_id,
+sum(quantity * cost_to_customer_per_qty) as total_spent
+from customer_purchases
+where strftime('%m', market_date) = '04'
+and strftime('%Y', market_date) = '2022'
+group by customer_id;
