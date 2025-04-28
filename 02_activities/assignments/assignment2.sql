@@ -185,18 +185,45 @@ order by v.vendor_name, p.product_name;
 This table will contain only products where the `product_qty_type = 'unit'`. 
 It should use all of the columns from the product table, as well as a new column for the `CURRENT_TIMESTAMP`.  
 Name the timestamp column `snapshot_timestamp`. */
-
+drop table if exists product_units;
+create table product_units as
+select *,
+	current_timestamp as snapshot_timestamp
+	from product
+	where 1 = 0;
+insert into product_units
+select *,
+	current_timestamp
+	from product
+	where product_qty_type = 'unit'
 
 
 /*2. Using `INSERT`, add a new row to the product_units table (with an updated timestamp). 
 This can be any product you desire (e.g. add another record for Apple Pie). */
-
+insert into product_units (
+    product_id, 
+    product_name, 
+    product_size, 
+    product_category_id, 
+    product_qty_type, 
+    snapshot_timestamp
+)
+values (
+    999, 
+    'Apple Pie', 
+    '1 each',  
+    5,  
+    'unit',  
+    current_timestamp  
+);
 
 
 -- DELETE
 /* 1. Delete the older record for the whatever product you added. 
 
 HINT: If you don't specify a WHERE clause, you are going to have a bad time.*/
+delete from product_units
+where product_id = 999;
 
 
 
@@ -216,7 +243,33 @@ Third, SET current_quantity = (...your select statement...), remembering that WH
 Finally, make sure you have a WHERE statement to update the right row, 
 	you'll need to use product_units.product_id to refer to the correct row within the product_units table. 
 When you have all of these components, you can run the update statement. */
+alter table product_units
+add current_quantity int;
 
 
+/*
+UPDATE product_units
+SET current_quantity = (
+    SELECT quantity
+    FROM vendor_inventory
+    WHERE vendor_inventory.product_id = product_units.product_id
+    ORDER BY market_date DESC
+    LIMIT 1
+);
+UPDATE product_units
+SET current_quantity = 0
+WHERE current_quantity IS NULL;
+*/
 
+
+update product_units
+set current_quantity = coalesce(
+    (
+        select vi.quantity
+        from vendor_inventory vi
+        where vi.product_id = product_units.product_id
+        order by vi.market_date desc
+        limit 1
+    ), 0
+);
 
